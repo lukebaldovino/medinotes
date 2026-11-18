@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/doctor.dart';
 import '../../../providers/doctor_provider.dart';
+import '../../visits/screens/add_edit_visit_screen.dart';
+import '../../visits/screens/visits_screen.dart';
 
 class DoctorDetailsScreen extends StatelessWidget {
   final Doctor doctor;
@@ -196,8 +198,62 @@ class DoctorDetailsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
             ],
+
+            // Action: Log Consultation
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AddEditVisitScreen(
+                        preselectedDoctorId: doctor.id,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_circle_outline, size: 20),
+                label: const Text('Log Consultation with Doctor'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Action: View Past Consultations with this doctor
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => VisitsScreen(
+                        filteredDoctor: doctor,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.history_edu_outlined, size: 20),
+                label: const Text('View Consultations with this Doctor'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
