@@ -29,9 +29,10 @@ class SqliteDoctorRepository implements DoctorRepository {
     }
 
     if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-      whereClauses.add('(${DatabaseTables.colDoctorFullName} LIKE ? OR ${DatabaseTables.colDoctorClinicName} LIKE ?)');
-      whereArgs.add('%${searchQuery.trim()}%');
-      whereArgs.add('%${searchQuery.trim()}%');
+      final sanitized = searchQuery.trim().replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_');
+      whereClauses.add("(${DatabaseTables.colDoctorFullName} LIKE ? ESCAPE '\\' OR ${DatabaseTables.colDoctorClinicName} LIKE ? ESCAPE '\\')");
+      whereArgs.add('%$sanitized%');
+      whereArgs.add('%$sanitized%');
     }
 
     final whereString = whereClauses.isNotEmpty ? 'WHERE ${whereClauses.join(' AND ')}' : '';
