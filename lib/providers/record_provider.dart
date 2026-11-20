@@ -29,9 +29,24 @@ class RecordProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   Future<void> initialize() async {
-    await loadCategories();
-    await loadRecords();
-    await loadDashboardMetrics();
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _categories = await _repository.getCategories();
+      _records = await _repository.getRecords(
+        searchQuery: _searchQuery,
+        categoryId: _selectedCategoryId,
+      );
+      _recentRecords = await _repository.getRecentRecords(limit: 3);
+      _totalRecordsCount = await _repository.getTotalRecordsCount();
+    } catch (e) {
+      _errorMessage = 'Failed to initialize medical records: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadCategories() async {
