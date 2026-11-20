@@ -72,7 +72,7 @@ class _AddEditVisitScreenState extends State<AddEditVisitScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(1900),
-      lastDate: now,
+      lastDate: DateTime(now.year + 5),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
