@@ -1,22 +1,39 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
 import '../constants/app_constants.dart';
+import 'database_migrations.dart';
 import 'database_tables.dart';
 
 class DatabaseHelper {
   static const String _databaseName = 'medinotes.db';
-  static const int _databaseVersion = 1;
+
+  /// Schema version this build reads and writes.
+  ///
+  /// Derived from the migration list so the version and the migrations cannot
+  /// disagree: adding a migration is the only way to raise it.
+  static const int _databaseVersion = DatabaseMigrations.latestVersion;
 
   DatabaseHelper._internal();
   static final DatabaseHelper instance = DatabaseHelper._internal();
 
   static Database? _database;
 
+  /// In-flight open, shared by concurrent callers so two callers cannot race
+  /// into opening two connections (and leaking the first).
+  static Future<Database>? _opening;
+
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+    final existing = _database;
+    if (existing != null) return existing;
+
+    return _opening ??= _initDatabase().then(
+      (db) {
+        _database = db;
+        return db;
+      },
+    ).whenComplete(() => _opening = null);
   }
 
   Future<Database> _initDatabase() async {
@@ -254,15 +271,40 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
+  /// Applies every migration between [oldVersion] and [newVersion] in order.
+  ///
+  /// sqflite wraps `onUpgrade` in a transaction, so either all steps commit or
+  /// none do. [DatabaseMigrations.buildPath] throws when a step is missing,
+  /// which surfaces as a failed open instead of a schema that silently lags
+  /// the queries running against it.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Migration framework ready for future upgrades
+    final path = DatabaseMigrations.buildPath(
+      oldVersion: oldVersion,
+      newVersion: newVersion,
+    );
+
+    debugPrint(
+      'Migrating database from v$oldVersion to v$newVersion '
+      '(${path.length} step(s)).',
+    );
+
+    for (final migration in path) {
+      debugPrint('  - ${migration.description}');
+      await migration.migrate(db);
+      // The schema version is owned by sqflite; assert the step advanced it so
+      // a migration cannot silently claim to have run without effect.
+      assert(
+        await db.getVersion() == migration.toVersion,
+        'Migration "${migration.description}" did not reach v${migration.toVersion}.',
+      );
+    }
   }
 
   Future<void> close() async {
     final db = _database;
-    if (db != null) {
+    _database = null;
+    if (db != null && db.isOpen) {
       await db.close();
-      _database = null;
     }
   }
 }
