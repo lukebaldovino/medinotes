@@ -17,9 +17,14 @@ class RecordDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String formattedDate = record.recordDate;
+    final currentRecord = context.watch<RecordProvider>().records.firstWhere(
+          (r) => r.id == record.id,
+          orElse: () => record,
+        );
+
+    String formattedDate = currentRecord.recordDate;
     try {
-      final parsed = DateTime.parse(record.recordDate);
+      final parsed = DateTime.parse(currentRecord.recordDate);
       formattedDate = DateFormat('MMMM d, yyyy').format(parsed);
     } catch (_) {}
 
@@ -34,14 +39,11 @@ class RecordDetailsScreen extends StatelessWidget {
             icon: const Icon(Icons.edit_outlined),
             tooltip: 'Edit Record',
             onPressed: () async {
-              final updated = await Navigator.of(context).push<bool>(
+              await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
-                  builder: (context) => AddEditRecordScreen(record: record),
+                  builder: (context) => AddEditRecordScreen(record: currentRecord),
                 ),
               );
-              if (updated == true && context.mounted) {
-                Navigator.of(context).pop(); // Return to refreshed records list
-              }
             },
           ),
           IconButton(
@@ -52,13 +54,13 @@ class RecordDetailsScreen extends StatelessWidget {
                 context: context,
                 title: 'Delete Record',
                 message:
-                    'Are you sure you want to delete "${record.title}"? Any attached document will also be permanently removed from device storage.',
+                    'Are you sure you want to delete "${currentRecord.title}"? Any attached document will also be permanently removed from device storage.',
                 confirmLabel: 'Delete',
                 isDestructive: true,
               );
 
               if (confirm && context.mounted) {
-                final success = await context.read<RecordProvider>().deleteRecord(record.id!);
+                final success = await context.read<RecordProvider>().deleteRecord(currentRecord.id!);
                 if (context.mounted) {
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -92,8 +94,8 @@ class RecordDetailsScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CategoryBadge(
-                  categoryName: record.categoryName ?? 'General',
-                  iconName: record.categoryIcon,
+                  categoryName: currentRecord.categoryName ?? 'General',
+                  iconName: currentRecord.categoryIcon,
                 ),
                 Text(
                   formattedDate,
@@ -109,7 +111,7 @@ class RecordDetailsScreen extends StatelessWidget {
 
             // Record Title
             Text(
-              record.title,
+              currentRecord.title,
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -120,8 +122,8 @@ class RecordDetailsScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Facility and Doctor Info Card
-            if ((record.doctorName != null && record.doctorName!.isNotEmpty) ||
-                (record.facilityName != null && record.facilityName!.isNotEmpty)) ...[
+            if ((currentRecord.doctorName != null && currentRecord.doctorName!.isNotEmpty) ||
+                (currentRecord.facilityName != null && currentRecord.facilityName!.isNotEmpty)) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -132,7 +134,7 @@ class RecordDetailsScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    if (record.facilityName != null && record.facilityName!.isNotEmpty) ...[
+                    if (currentRecord.facilityName != null && currentRecord.facilityName!.isNotEmpty) ...[
                       Row(
                         children: [
                           const Icon(
@@ -143,7 +145,7 @@ class RecordDetailsScreen extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              record.facilityName!,
+                              currentRecord.facilityName!,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -154,12 +156,12 @@ class RecordDetailsScreen extends StatelessWidget {
                         ],
                       ),
                     ],
-                    if (record.facilityName != null &&
-                        record.facilityName!.isNotEmpty &&
-                        record.doctorName != null &&
-                        record.doctorName!.isNotEmpty)
+                    if (currentRecord.facilityName != null &&
+                        currentRecord.facilityName!.isNotEmpty &&
+                        currentRecord.doctorName != null &&
+                        currentRecord.doctorName!.isNotEmpty)
                       const Divider(height: 20, color: AppColors.border),
-                    if (record.doctorName != null && record.doctorName!.isNotEmpty) ...[
+                    if (currentRecord.doctorName != null && currentRecord.doctorName!.isNotEmpty) ...[
                       Row(
                         children: [
                           const Icon(
@@ -170,7 +172,7 @@ class RecordDetailsScreen extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              record.doctorName!,
+                              currentRecord.doctorName!,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -188,7 +190,7 @@ class RecordDetailsScreen extends StatelessWidget {
             ],
 
             // Description / Notes Card
-            if (record.description != null && record.description!.isNotEmpty) ...[
+            if (currentRecord.description != null && currentRecord.description!.isNotEmpty) ...[
               const Text(
                 'Clinical Notes & Description',
                 style: TextStyle(
@@ -207,7 +209,7 @@ class RecordDetailsScreen extends StatelessWidget {
                   border: Border.all(color: AppColors.border),
                 ),
                 child: Text(
-                  record.description!,
+                  currentRecord.description!,
                   style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,
@@ -219,7 +221,7 @@ class RecordDetailsScreen extends StatelessWidget {
             ],
 
             // Attached Document Card
-            if (record.hasAttachment) ...[
+            if (currentRecord.hasAttachment) ...[
               const Text(
                 'Attached Medical Document',
                 style: TextStyle(
@@ -230,8 +232,8 @@ class RecordDetailsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               AttachmentPreviewCard(
-                relativeFilePath: record.filePath,
-                fileType: record.fileType,
+                relativeFilePath: currentRecord.filePath,
+                fileType: currentRecord.fileType,
                 isInteractive: true,
               ),
               const SizedBox(height: 8),
