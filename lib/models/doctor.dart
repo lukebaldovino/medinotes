@@ -47,7 +47,8 @@ class Doctor {
       contactNumber: map[DatabaseTables.colDoctorContactNumber] as String? ?? '',
       description: map[DatabaseTables.colDoctorDescription] as String?,
       imagePath: map[DatabaseTables.colDoctorImagePath] as String?,
-      isFavorite: (map[DatabaseTables.colDoctorIsFavorite] as int? ?? 0) == 1,
+      isFavorite: map[DatabaseTables.colDoctorIsFavorite] == 1 ||
+          map[DatabaseTables.colDoctorIsFavorite] == true,
     );
   }
 
