@@ -31,6 +31,11 @@ class DoctorDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentDoctor = context.watch<DoctorProvider>().doctors.firstWhere(
+          (d) => d.id == doctor.id,
+          orElse: () => doctor,
+        );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -38,22 +43,14 @@ class DoctorDetailsScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
-          Consumer<DoctorProvider>(
-            builder: (context, provider, _) {
-              final currentDoctor = provider.doctors.firstWhere(
-                (d) => d.id == doctor.id,
-                orElse: () => doctor,
-              );
-              return IconButton(
-                icon: Icon(
-                  currentDoctor.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
-                  color: currentDoctor.isFavorite ? AppColors.accent : AppColors.textMuted,
-                  size: 26,
-                ),
-                tooltip: currentDoctor.isFavorite ? 'Remove Favorite' : 'Add to Favorites',
-                onPressed: () => provider.toggleFavorite(currentDoctor),
-              );
-            },
+          IconButton(
+            icon: Icon(
+              currentDoctor.isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+              color: currentDoctor.isFavorite ? AppColors.accent : AppColors.textMuted,
+              size: 26,
+            ),
+            tooltip: currentDoctor.isFavorite ? 'Remove Favorite' : 'Add to Favorites',
+            onPressed: () => context.read<DoctorProvider>().toggleFavorite(currentDoctor),
           ),
         ],
       ),
@@ -83,7 +80,7 @@ class DoctorDetailsScreen extends StatelessWidget {
                     radius: 44,
                     backgroundColor: AppColors.primaryContainer,
                     child: Text(
-                      _getInitials(doctor.fullName),
+                      _getInitials(currentDoctor.fullName),
                       style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -93,7 +90,7 @@ class DoctorDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    doctor.fullName,
+                    currentDoctor.fullName,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 20,
@@ -109,7 +106,7 @@ class DoctorDetailsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      doctor.specialty,
+                      currentDoctor.specialty,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -146,19 +143,19 @@ class DoctorDetailsScreen extends StatelessWidget {
                   _buildDetailRow(
                     icon: Icons.business_outlined,
                     label: 'Clinic / Hospital',
-                    value: doctor.clinicName,
+                    value: currentDoctor.clinicName,
                   ),
                   const SizedBox(height: 14),
                   _buildDetailRow(
                     icon: Icons.location_on_outlined,
                     label: 'Address & Room',
-                    value: doctor.address,
+                    value: currentDoctor.address,
                   ),
                   const SizedBox(height: 14),
                   _buildDetailRow(
                     icon: Icons.phone_outlined,
                     label: 'Contact Number',
-                    value: doctor.contactNumber,
+                    value: currentDoctor.contactNumber,
                   ),
                 ],
               ),
@@ -166,7 +163,7 @@ class DoctorDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Bio & Clinical Experience Card
-            if (doctor.description != null && doctor.description!.isNotEmpty) ...[
+            if (currentDoctor.description != null && currentDoctor.description!.isNotEmpty) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -188,7 +185,7 @@ class DoctorDetailsScreen extends StatelessWidget {
                     ),
                     const Divider(height: 24, color: AppColors.border),
                     Text(
-                      doctor.description!,
+                      currentDoctor.description!,
                       style: const TextStyle(
                         fontSize: 14,
                         color: AppColors.textPrimary,
@@ -210,7 +207,7 @@ class DoctorDetailsScreen extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => AddEditVisitScreen(
-                        preselectedDoctorId: doctor.id,
+                        preselectedDoctorId: currentDoctor.id,
                       ),
                     ),
                   );
@@ -237,7 +234,7 @@ class DoctorDetailsScreen extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => VisitsScreen(
-                        filteredDoctor: doctor,
+                        filteredDoctor: currentDoctor,
                       ),
                     ),
                   );
