@@ -88,7 +88,7 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(1900),
-      lastDate: now,
+      lastDate: DateTime(now.year + 5),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -214,10 +214,17 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
 
   void _removeAttachment() {
     setState(() {
-      _newPickedFile = null;
-      _newPickedFileName = null;
-      _newPickedFileType = null;
-      _removedExistingAttachment = true;
+      if (_newPickedFile != null) {
+        // Cancel newly picked file, preserve existing saved attachment if present
+        _newPickedFile = null;
+        _newPickedFileName = null;
+        _newPickedFileType = null;
+      } else {
+        // Mark existing saved attachment for removal
+        _existingFilePath = null;
+        _existingFileType = null;
+        _removedExistingAttachment = true;
+      }
     });
   }
 
@@ -235,6 +242,8 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
 
     setState(() => _isSaving = true);
 
+    String? createdRelativePath;
+
     try {
       String? finalFilePath = _existingFilePath;
       String? finalFileType = _existingFileType;
@@ -248,11 +257,11 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
 
       // If user selected a new file, copy it into managed app storage
       if (_newPickedFile != null && _newPickedFileName != null) {
-        final relativePath = await FileStorageService.instance.saveDocumentFile(
+        createdRelativePath = await FileStorageService.instance.saveDocumentFile(
           sourceFile: _newPickedFile!,
           originalFileName: _newPickedFileName!,
         );
-        finalFilePath = relativePath;
+        finalFilePath = createdRelativePath;
         finalFileType = _newPickedFileType;
       }
 
@@ -279,6 +288,11 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
       final success = isEditing
           ? await provider.updateRecord(record)
           : await provider.createRecord(record);
+
+      if (!success && createdRelativePath != null) {
+        // Clean up newly copied file if DB save failed
+        await FileStorageService.instance.deleteFile(createdRelativePath);
+      }
 
       if (!mounted) return;
 
