@@ -49,8 +49,9 @@ class SqliteMedicalRecordRepository implements MedicalRecordRepository {
     }
 
     if (searchQuery != null && searchQuery.trim().isNotEmpty) {
-      whereClauses.add('r.${DatabaseTables.colRecordTitle} LIKE ?');
-      whereArgs.add('%${searchQuery.trim()}%');
+      final sanitized = searchQuery.trim().replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_');
+      whereClauses.add("r.${DatabaseTables.colRecordTitle} LIKE ? ESCAPE '\\'");
+      whereArgs.add('%$sanitized%');
     }
 
     final whereString = whereClauses.isNotEmpty ? 'WHERE ${whereClauses.join(' AND ')}' : '';
