@@ -5,6 +5,10 @@ allprojects {
     }
 }
 
+// Only relocate the build directory of in-tree projects. Included/external
+// projects (Flutter plugins resolved from the pub cache) must keep their build
+// directory inside their own project root, otherwise AGP 9 fails with
+// "this and base files have different roots" when creating per-variant tasks.
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
@@ -12,8 +16,13 @@ val newBuildDir: Directory =
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
+    val inTree =
+        project.projectDir.canonicalFile.path
+            .startsWith(rootProject.projectDir.canonicalFile.path)
+    if (inTree) {
+        val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+        project.layout.buildDirectory.value(newSubprojectBuildDir)
+    }
 }
 
 subprojects {
