@@ -56,7 +56,8 @@ void main() {
       expect(provider.patient?.fullName, 'Maria Clara');
       expect(provider.initials, 'MC');
       expect(provider.age, isNotNull);
-      expect(provider.age! >= 26, true);
+      final expectedAge = DateTime.now().year - 2000;
+      expect(provider.age, expectedAge);
     });
 
     test('Reloading loads saved patient profile', () async {
