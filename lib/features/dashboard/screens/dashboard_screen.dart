@@ -233,7 +233,9 @@ class DashboardScreen extends StatelessWidget {
                 Consumer2<RecordProvider, VisitProvider>(
                   builder: (context, recordProv, visitProv, child) {
                     final recordsCount = recordProv.totalRecordsCount;
-                    final visitsCount = visitProv.visits.length;
+                    // `visits` may be scoped to one doctor by a filtered load,
+                    // so the global count comes from the provider's total.
+                    final visitsCount = visitProv.totalVisitsCount;
 
                     return Row(
                       children: [

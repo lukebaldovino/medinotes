@@ -54,6 +54,12 @@ class Visit {
     );
   }
 
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Nullable fields are cleared by passing [clearDoctorId], [clearDiagnosis] or
+  /// [clearNotes]; passing `null` for the corresponding value argument keeps the
+  /// current value. Clearing [doctorId] detaches the visit from its doctor, and
+  /// the joined doctor fields are dropped with it.
   Visit copyWith({
     int? id,
     int? doctorId,
@@ -65,18 +71,21 @@ class Visit {
     String? doctorName,
     String? doctorSpecialty,
     String? clinicName,
+    bool clearDoctorId = false,
+    bool clearDiagnosis = false,
+    bool clearNotes = false,
   }) {
     return Visit(
       id: id ?? this.id,
-      doctorId: doctorId ?? this.doctorId,
+      doctorId: clearDoctorId ? null : doctorId ?? this.doctorId,
       visitDate: visitDate ?? this.visitDate,
       reason: reason ?? this.reason,
-      diagnosis: diagnosis ?? this.diagnosis,
-      notes: notes ?? this.notes,
+      diagnosis: clearDiagnosis ? null : diagnosis ?? this.diagnosis,
+      notes: clearNotes ? null : notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
-      doctorName: doctorName ?? this.doctorName,
-      doctorSpecialty: doctorSpecialty ?? this.doctorSpecialty,
-      clinicName: clinicName ?? this.clinicName,
+      doctorName: clearDoctorId ? null : doctorName ?? this.doctorName,
+      doctorSpecialty: clearDoctorId ? null : doctorSpecialty ?? this.doctorSpecialty,
+      clinicName: clearDoctorId ? null : clinicName ?? this.clinicName,
     );
   }
 }

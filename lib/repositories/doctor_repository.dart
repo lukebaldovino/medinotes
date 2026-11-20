@@ -83,7 +83,10 @@ class SqliteDoctorRepository implements DoctorRepository {
       set.add(s);
     }
 
-    return set.toList();
+    // 'All' stays first as the reset filter; the rest stay alphabetical so the
+    // chip order is stable regardless of insertion order.
+    final sorted = set.where((s) => s != 'All').toList()..sort();
+    return ['All', ...sorted];
   }
 
   @override

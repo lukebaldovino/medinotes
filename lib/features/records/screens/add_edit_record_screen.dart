@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -82,6 +84,27 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
     super.dispose();
   }
 
+  /// Joined category name for the current selection, or null when the category
+  /// list has not loaded yet.
+  String? get _selectedCategoryName {
+    final id = _selectedCategoryId;
+    if (id == null) return null;
+    for (final cat in context.read<RecordProvider>().categories) {
+      if (cat.id == id) return cat.name;
+    }
+    return null;
+  }
+
+  /// Joined category icon key for the current selection.
+  String? get _selectedCategoryIcon {
+    final id = _selectedCategoryId;
+    if (id == null) return null;
+    for (final cat in context.read<RecordProvider>().categories) {
+      if (cat.id == id) return cat.icon;
+    }
+    return null;
+  }
+
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
@@ -159,6 +182,22 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
           _newPickedFileType = 'image';
           _removedExistingAttachment = false;
         });
+      }
+    } on PlatformException catch (e) {
+      // The camera hand-off fails with camera_access_denied when the permission
+      // was refused, or when the device has no camera app to capture with.
+      if (mounted) {
+        final isDenied = e.code == 'camera_access_denied';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isDenied
+                  ? 'Camera access denied. Allow camera permission in system settings, or attach an image from the gallery instead.'
+                  : 'Failed to select image: ${e.message ?? e.code}',
+            ),
+            backgroundColor: AppColors.warning,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -282,6 +321,10 @@ class _AddEditRecordScreenState extends State<AddEditRecordScreen> {
         fileType: finalFileType,
         createdAt: widget.record?.createdAt ?? now,
         updatedAt: now,
+        // Carry the joined category metadata through so the freshly saved record
+        // renders without waiting for a reload.
+        categoryName: _selectedCategoryName,
+        categoryIcon: _selectedCategoryIcon,
       );
 
       final isEditing = widget.record != null;

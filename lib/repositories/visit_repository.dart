@@ -1,3 +1,5 @@
+import 'package:sqflite/sqflite.dart';
+
 import '../core/database/database_helper.dart';
 import '../core/database/database_tables.dart';
 import '../models/visit.dart';
@@ -9,6 +11,7 @@ abstract class VisitRepository {
   Future<int> updateVisit(Visit visit);
   Future<int> deleteVisit(int id);
   Future<Visit?> getLatestVisit();
+  Future<int> getTotalVisitsCount();
 }
 
 class SqliteVisitRepository implements VisitRepository {
@@ -101,5 +104,14 @@ class SqliteVisitRepository implements VisitRepository {
     final list = await getVisits();
     if (list.isNotEmpty) return list.first;
     return null;
+  }
+
+  @override
+  Future<int> getTotalVisitsCount() async {
+    final db = await _dbHelper.database;
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM ${DatabaseTables.tableVisits}'),
+    );
+    return count ?? 0;
   }
 }

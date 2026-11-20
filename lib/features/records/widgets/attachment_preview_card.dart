@@ -31,6 +31,7 @@ class _AttachmentPreviewCardState extends State<AttachmentPreviewCard> {
   int? _fileSizeBytes;
   bool _isLoading = true;
   bool _fileMissing = false;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -48,33 +49,47 @@ class _AttachmentPreviewCardState extends State<AttachmentPreviewCard> {
   }
 
   Future<void> _loadFile() async {
+    // Bumped for every load so a slow earlier disk read cannot overwrite the
+    // result of a newer one when the attachment changes in quick succession.
+    final generation = ++_loadGeneration;
+
+    _resolvedFile = null;
+    _fileSizeBytes = null;
+    _fileMissing = false;
     setState(() => _isLoading = true);
 
-    if (widget.localFile != null) {
-      _resolvedFile = widget.localFile;
-      if (await _resolvedFile!.exists()) {
-        _fileSizeBytes = await _resolvedFile!.length();
-        _fileMissing = false;
+    File? resolved;
+    int? sizeBytes;
+    var missing = false;
+
+    final localFile = widget.localFile;
+    if (localFile != null) {
+      resolved = localFile;
+      if (await localFile.exists()) {
+        sizeBytes = await localFile.length();
       } else {
-        _fileMissing = true;
+        missing = true;
       }
     } else if (widget.relativeFilePath != null) {
       final file = await FileStorageService.instance.resolveFile(widget.relativeFilePath!);
       if (await file.exists()) {
-        _resolvedFile = file;
-        _fileSizeBytes = await file.length();
-        _fileMissing = false;
+        resolved = file;
+        sizeBytes = await file.length();
       } else {
-        _fileMissing = true;
+        missing = true;
       }
     } else {
-      _resolvedFile = null;
-      _fileMissing = true;
+      missing = true;
     }
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
+    if (!mounted || generation != _loadGeneration) return;
+
+    setState(() {
+      _resolvedFile = missing ? null : resolved;
+      _fileSizeBytes = missing ? null : sizeBytes;
+      _fileMissing = missing;
+      _isLoading = false;
+    });
   }
 
   Future<void> _openFile() async {

@@ -55,6 +55,11 @@ class Patient {
     );
   }
 
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Nullable fields are cleared by passing [clearBloodType], [clearContactNumber],
+  /// [clearEmergencyContact] or [clearAllergies]; passing `null` for the
+  /// corresponding value argument keeps the current value.
   Patient copyWith({
     int? id,
     String? fullName,
@@ -66,16 +71,22 @@ class Patient {
     String? allergies,
     String? createdAt,
     String? updatedAt,
+    bool clearBloodType = false,
+    bool clearContactNumber = false,
+    bool clearEmergencyContact = false,
+    bool clearAllergies = false,
   }) {
     return Patient(
       id: id ?? this.id,
       fullName: fullName ?? this.fullName,
       birthDate: birthDate ?? this.birthDate,
       sex: sex ?? this.sex,
-      bloodType: bloodType ?? this.bloodType,
-      contactNumber: contactNumber ?? this.contactNumber,
-      emergencyContact: emergencyContact ?? this.emergencyContact,
-      allergies: allergies ?? this.allergies,
+      bloodType: clearBloodType ? null : bloodType ?? this.bloodType,
+      contactNumber:
+          clearContactNumber ? null : contactNumber ?? this.contactNumber,
+      emergencyContact:
+          clearEmergencyContact ? null : emergencyContact ?? this.emergencyContact,
+      allergies: clearAllergies ? null : allergies ?? this.allergies,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

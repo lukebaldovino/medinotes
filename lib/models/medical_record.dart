@@ -75,6 +75,13 @@ class MedicalRecord {
     );
   }
 
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Nullable fields are cleared by passing [clearDescription], [clearDoctorName],
+  /// [clearFacilityName], [clearFilePath] or [clearFileType]; passing `null` for
+  /// the corresponding value argument keeps the current value. Without the
+  /// explicit clear flags a `null` argument is indistinguishable from "omit",
+  /// which silently retains values the caller intended to remove.
   MedicalRecord copyWith({
     int? id,
     String? title,
@@ -89,17 +96,22 @@ class MedicalRecord {
     String? updatedAt,
     String? categoryName,
     String? categoryIcon,
+    bool clearDescription = false,
+    bool clearDoctorName = false,
+    bool clearFacilityName = false,
+    bool clearFilePath = false,
+    bool clearFileType = false,
   }) {
     return MedicalRecord(
       id: id ?? this.id,
       title: title ?? this.title,
       categoryId: categoryId ?? this.categoryId,
-      description: description ?? this.description,
+      description: clearDescription ? null : description ?? this.description,
       recordDate: recordDate ?? this.recordDate,
-      doctorName: doctorName ?? this.doctorName,
-      facilityName: facilityName ?? this.facilityName,
-      filePath: filePath ?? this.filePath,
-      fileType: fileType ?? this.fileType,
+      doctorName: clearDoctorName ? null : doctorName ?? this.doctorName,
+      facilityName: clearFacilityName ? null : facilityName ?? this.facilityName,
+      filePath: clearFilePath ? null : filePath ?? this.filePath,
+      fileType: clearFileType ? null : fileType ?? this.fileType,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       categoryName: categoryName ?? this.categoryName,

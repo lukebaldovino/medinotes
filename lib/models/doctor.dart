@@ -52,6 +52,10 @@ class Doctor {
     );
   }
 
+  /// Returns a copy with the given fields replaced.
+  ///
+  /// Nullable fields are cleared by passing [clearDescription] or [clearImagePath];
+  /// passing `null` for the corresponding value argument keeps the current value.
   Doctor copyWith({
     int? id,
     String? fullName,
@@ -62,6 +66,8 @@ class Doctor {
     String? description,
     String? imagePath,
     bool? isFavorite,
+    bool clearDescription = false,
+    bool clearImagePath = false,
   }) {
     return Doctor(
       id: id ?? this.id,
@@ -70,8 +76,8 @@ class Doctor {
       clinicName: clinicName ?? this.clinicName,
       address: address ?? this.address,
       contactNumber: contactNumber ?? this.contactNumber,
-      description: description ?? this.description,
-      imagePath: imagePath ?? this.imagePath,
+      description: clearDescription ? null : description ?? this.description,
+      imagePath: clearImagePath ? null : imagePath ?? this.imagePath,
       isFavorite: isFavorite ?? this.isFavorite,
     );
   }

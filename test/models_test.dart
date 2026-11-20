@@ -119,6 +119,113 @@ void main() {
       expect(fromMap.icon, 'medication');
     });
 
+    test('MedicalRecord.copyWith keeps values when a nullable field is omitted', () {
+      final record = MedicalRecord(
+        title: 'Blood Panel',
+        categoryId: 2,
+        description: 'Normal',
+        recordDate: '2026-01-01',
+        doctorName: 'Dr. Santos',
+        filePath: 'medical_records_files/a.pdf',
+        fileType: 'pdf',
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      );
+
+      final updated = record.copyWith(title: 'Blood Panel v2');
+
+      expect(updated.description, 'Normal');
+      expect(updated.doctorName, 'Dr. Santos');
+      expect(updated.filePath, 'medical_records_files/a.pdf');
+    });
+
+    test('MedicalRecord.copyWith clears nullable fields via explicit flags', () {
+      final record = MedicalRecord(
+        title: 'Blood Panel',
+        categoryId: 2,
+        description: 'Normal',
+        recordDate: '2026-01-01',
+        doctorName: 'Dr. Santos',
+        facilityName: 'Metro Hospital',
+        filePath: 'medical_records_files/a.pdf',
+        fileType: 'pdf',
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      );
+
+      final cleared = record.copyWith(
+        clearDescription: true,
+        clearDoctorName: true,
+        clearFacilityName: true,
+        clearFilePath: true,
+        clearFileType: true,
+      );
+
+      expect(cleared.description, isNull);
+      expect(cleared.doctorName, isNull);
+      expect(cleared.facilityName, isNull);
+      expect(cleared.filePath, isNull);
+      expect(cleared.fileType, isNull);
+      expect(cleared.hasAttachment, false);
+    });
+
+    test('Patient.copyWith clears nullable fields via explicit flags', () {
+      final patient = Patient(
+        fullName: 'Jane Doe',
+        birthDate: '1990-01-01',
+        sex: 'Female',
+        bloodType: 'O+',
+        allergies: 'Penicillin',
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+      );
+
+      final cleared = patient.copyWith(clearBloodType: true, clearAllergies: true);
+      expect(cleared.bloodType, isNull);
+      expect(cleared.allergies, isNull);
+      expect(cleared.fullName, 'Jane Doe');
+    });
+
+    test('Visit.copyWith can detach the doctor and drop joined fields', () {
+      final visit = Visit(
+        doctorId: 4,
+        visitDate: '2026-01-01',
+        reason: 'Checkup',
+        diagnosis: 'Healthy',
+        createdAt: '2026-01-01T00:00:00Z',
+        doctorName: 'Dr. Lim',
+        doctorSpecialty: 'Orthopedics',
+        clinicName: 'Bone Center',
+      );
+
+      final detached = visit.copyWith(clearDoctorId: true, clearDiagnosis: true);
+
+      expect(detached.doctorId, isNull);
+      expect(detached.diagnosis, isNull);
+      expect(detached.doctorName, isNull);
+      expect(detached.doctorSpecialty, isNull);
+      expect(detached.clinicName, isNull);
+      expect(detached.reason, 'Checkup');
+    });
+
+    test('Doctor.copyWith can clear description without touching favorites', () {
+      final doctor = Doctor(
+        fullName: 'Dr. Cruz',
+        specialty: 'ENT',
+        clinicName: 'ENT Specialists',
+        address: 'Suite 310',
+        contactNumber: '+63 929 890 1234',
+        description: 'Otolaryngologist',
+        isFavorite: true,
+      );
+
+      final cleared = doctor.copyWith(clearDescription: true);
+
+      expect(cleared.description, isNull);
+      expect(cleared.isFavorite, true);
+      expect(cleared.fullName, 'Dr. Cruz');
+    });
+
     test('FileStorageService.formatBytes formats correctly', () {
       expect(FileStorageService.formatBytes(0), '0 B');
       expect(FileStorageService.formatBytes(500), '500 B');

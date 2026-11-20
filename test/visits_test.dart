@@ -55,6 +55,9 @@ class FakeVisitRepository implements VisitRepository {
     final list = await getVisits();
     return list.isNotEmpty ? list.first : null;
   }
+
+  @override
+  Future<int> getTotalVisitsCount() async => _visits.length;
 }
 
 void main() {
@@ -111,6 +114,52 @@ void main() {
       await provider.loadVisits(doctorId: 1);
       expect(provider.visits.length, 1);
       expect(provider.visits.first.reason, 'Heart Consultation');
+    });
+
+    test('totalVisitCount stays global when the active list is doctor-filtered', () async {
+      await provider.createVisit(Visit(
+        doctorId: 1,
+        visitDate: '2026-01-01',
+        reason: 'Heart Consultation',
+        createdAt: '2026-01-01T00:00:00Z',
+      ));
+      await provider.createVisit(Visit(
+        doctorId: 2,
+        visitDate: '2026-01-02',
+        reason: 'Skin Checkup',
+        createdAt: '2026-01-02T00:00:00Z',
+      ));
+
+      // Filtering to one doctor narrows `visits`, and that filtered state must
+      // not leak into the global count shown on the dashboard.
+      await provider.loadVisits(doctorId: 1);
+      expect(provider.visits.length, 1);
+      expect(provider.activeDoctorId, 1);
+      expect(provider.totalVisitsCount, 2);
+    });
+
+    test('Mutations preserve the active doctor filter', () async {
+      await provider.createVisit(Visit(
+        doctorId: 1,
+        visitDate: '2026-01-01',
+        reason: 'Heart Consultation',
+        createdAt: '2026-01-01T00:00:00Z',
+      ));
+      await provider.createVisit(Visit(
+        doctorId: 2,
+        visitDate: '2026-01-02',
+        reason: 'Skin Checkup',
+        createdAt: '2026-01-02T00:00:00Z',
+      ));
+
+      await provider.loadVisits(doctorId: 2);
+      expect(provider.visits.length, 1);
+
+      // Deleting from the filtered view must not widen the list back to all doctors.
+      await provider.deleteVisit(provider.visits.first.id!);
+      expect(provider.activeDoctorId, 2);
+      expect(provider.visits.isEmpty, true);
+      expect(provider.totalVisitsCount, 1);
     });
 
     test('Delete visit updates list and latestVisit', () async {

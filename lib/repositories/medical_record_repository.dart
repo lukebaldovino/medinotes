@@ -113,23 +113,26 @@ class SqliteMedicalRecordRepository implements MedicalRecordRepository {
   Future<int> updateRecord(MedicalRecord record) async {
     final db = await _dbHelper.database;
 
-    // Check if attachment changed, and delete old physical file if replaced
-    if (record.id != null) {
-      final old = await getRecordById(record.id!);
-      if (old != null && old.filePath != null && old.filePath != record.filePath) {
-        await _storageService.deleteFile(old.filePath);
-      }
-    }
+    final previous = record.id == null ? null : await getRecordById(record.id!);
 
     final now = DateTime.now().toIso8601String();
     final toUpdate = record.copyWith(updatedAt: now);
 
-    return await db.update(
+    final rowsAffected = await db.update(
       DatabaseTables.tableMedicalRecords,
       toUpdate.toMap(),
       where: '${DatabaseTables.colRecordId} = ?',
       whereArgs: [record.id],
     );
+
+    // Delete the superseded attachment only after the row is committed, so a
+    // failed update cannot leave the database pointing at a removed file.
+    final previousPath = previous?.filePath;
+    if (rowsAffected > 0 && previousPath != null && previousPath != toUpdate.filePath) {
+      await _storageService.deleteFile(previousPath);
+    }
+
+    return rowsAffected;
   }
 
   @override
